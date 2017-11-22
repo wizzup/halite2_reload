@@ -1,7 +1,55 @@
-# Usage: reload.py <filename> <player_id> <bot_path>
+# Usage: reload.py <filename> <player_id> <bot_path> <optional_2nd_bot_path>
 # Note that the replay file must be decompressed JSON (not zstd; use the Chlorine Viewer for this).
 
 import json, subprocess, sys
+
+class MoveList:
+
+	# FIXME: currently assumes bot sends sane commands.
+
+	def __init__(self, s):
+
+		self.moves = dict()
+
+		tokens = s.split()
+
+		acc = ""
+		length = 0
+
+		for token in tokens:
+
+			if len(acc) > 0:
+				acc += " "
+
+			acc += token
+			length += 1
+
+			if acc[0] == 't' and length == 4:
+
+				self.moves[int(acc.split()[1])] = acc
+				acc = ""
+				length = 0
+
+			elif acc[0] == 'd' and length == 3:
+
+				self.moves[int(acc.split()[1])] = acc
+				acc = ""
+				length = 0
+
+			elif acc[0] == 'u' and length == 2:
+
+				self.moves[int(acc.split()[1])] = acc
+				acc = ""
+				length = 0
+
+	def sids(self):
+
+		ret = set()
+
+		for key in self.moves:
+			ret.add(key)
+
+		return ret
 
 # ------------------------------
 
@@ -101,28 +149,69 @@ def send_frame(link, replay, n):
 
 def main():
 
+	if len(sys.argv) < 4:
+		print("Usage: reload.py <filename> <player_id> <bot_path> <optional_2nd_bot_path>")
+		return
+
 	filename = sys.argv[1]
 
 	with open(filename) as infile:
 		replay = json.loads(infile.read())
 
-	link = subprocess.Popen(sys.argv[3], shell = False, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
+	links = []
+
+	for n in range(3, len(sys.argv)):
+		links.append(subprocess.Popen(sys.argv[n], shell = False, stdin = subprocess.PIPE, stdout = subprocess.PIPE))
 
 	pid = int(sys.argv[2])
 
 	width, height = replay["width"], replay["height"]
 
-	send(link, "{}".format(pid))
-	send(link, "{} {}".format(width, height))
+	for link in links:
+		send(link, "{}".format(pid))
+		send(link, "{} {}".format(width, height))
+		send_frame(link, replay, 0)
 
-	send_frame(link, replay, 0)
-	link.stdout.readline()			# The bot's init message e.g. its name
+	bot_outputs = [ [] for n in range(len(links)) ]
 
 	for n in range(replay["num_frames"]):
-		send_frame(link, replay, n)
-		link.stdout.readline()
-		if n % 10 == 0:
-			print("Turn {}".format(n))
+
+		print("Turn {}".format(n))
+
+		for i, link in enumerate(links):
+			send_frame(link, replay, n)
+			bot_outputs[i].append(MoveList(link.stdout.readline().decode("utf-8")))
+
+		if len(links) > 1:
+
+			sids = set()
+
+			for i in range(len(links)):
+				sids = sids.union(bot_outputs[i][n].sids())
+
+			sids = list(sids)
+			sids = sorted(sids)
+
+			for sid in sids:
+
+				diverges = False
+				baseline = bot_outputs[0][n].moves.get(sid, "")
+
+				for i in range(1, len(links)):
+					other = bot_outputs[i][n].moves.get(sid, "")
+					if other != baseline:
+						diverges = True
+
+				if diverges:
+					messages = [bot_outputs[i][n].moves.get(sid, "") for i in range(len(bot_outputs))]
+
+					for msg in messages:
+						print(msg, end="")
+						if len(msg) < 18:
+							print(" " * (18 - len(msg)), end="")
+
+					if len(messages) > 0:
+						print()
 
 	print("Completed OK")
 
