@@ -81,29 +81,28 @@ def send_frame(link, replay, n):
 		elements.append(pid)
 		elements.append(len(ship_id_strings))
 
-		if len(ship_id_strings) > 0:
+		for sid in ship_id_strings:
 
-			for sid in ship_id_strings:
-				ship = players[pid][sid]
+			ship = players[pid][sid]
 
-				for key in ["id", "x", "y", "health", "vel_x", "vel_y"]:
-					elements += [ship[key]]
+			for key in ["id", "x", "y", "health", "vel_x", "vel_y"]:
+				elements += [ship[key]]
 
-				dockedstatus_number = {"undocked": 0, "docking": 1, "docked": 2, "undocking": 3}[ship["docking"]["status"]]
+			dockedstatus_number = {"undocked": 0, "docking": 1, "docked": 2, "undocking": 3}[ship["docking"]["status"]]
 
-				elements.append(dockedstatus_number)
+			elements.append(dockedstatus_number)
 
-				if dockedstatus_number == 0:
-					elements.append(0)
-				else:
-					elements.append(ship["docking"]["planet_id"])
-
-				if dockedstatus_number not in [1,3]:
-					elements.append(0)
-				else:
-					elements.append(ship["docking"]["turns_left"])
-
+			if dockedstatus_number == 0:
 				elements.append(0)
+			else:
+				elements.append(ship["docking"]["planet_id"])
+
+			if dockedstatus_number not in [1,3]:
+				elements.append(0)
+			else:
+				elements.append(ship["docking"]["turns_left"])
+
+			elements.append(0)
 
 	planets = frame["planets"]
 	planet_id_strings = sorted(planets.keys(), key = lambda x : int(x))
