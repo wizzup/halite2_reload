@@ -57,6 +57,7 @@ def send(link, msg):
 	if msg.endswith("\n") == False:
 		msg += "\n"
 	msg = bytes(msg, encoding = "ascii")
+
 	link.stdin.write(msg)
 	link.stdin.flush()
 
@@ -170,6 +171,7 @@ def main():
 		send(link, "{}".format(pid))
 		send(link, "{} {}".format(width, height))
 		send_frame(link, replay, 0)
+		link.stdout.readline()
 
 	bot_outputs = [ [] for n in range(len(links)) ]
 
@@ -217,4 +219,3 @@ def main():
 # ------------------------------
 
 main()
-
