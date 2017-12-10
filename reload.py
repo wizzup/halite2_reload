@@ -220,7 +220,7 @@ def main():
 
 		replay_moves = MoveList(replay["moves"][n][str(pid)][0])
 
-		sids = set()
+		sids = replay_moves.sids()
 
 		for i in range(len(links)):
 			sids = sids.union(bot_outputs[i][n].sids())
