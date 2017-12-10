@@ -237,10 +237,10 @@ def main():
 		for sid in sids:
 
 			diverges = False
-			baseline = replay_moves.moves.get(sid, "")
+			baseline = replay_moves.moves.get(sid, "(blank)")
 
 			for i in range(0, len(links)):
-				other = bot_outputs[i][n].moves.get(sid, "")
+				other = bot_outputs[i][n].moves.get(sid, "(blank)")
 				if other != baseline:
 					diverges = True
 
@@ -250,7 +250,7 @@ def main():
 					print("Turn {}".format(n))
 					have_printed_turn = True
 
-				messages = [baseline] + [bot_outputs[i][n].moves.get(sid, "") for i in range(len(bot_outputs))]
+				messages = [baseline] + [bot_outputs[i][n].moves.get(sid, "(blank)") for i in range(len(bot_outputs))]
 
 				print("    ", end="")
 
