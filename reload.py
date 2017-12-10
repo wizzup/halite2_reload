@@ -21,7 +21,11 @@ class MoveList:
 			if len(acc) > 0:
 				acc += " "
 
-			acc += token
+			if length == 3 and acc[0] == 't' and token[0] != '-':
+				acc += str(int(token) % 360)						# Relevant to my interests.
+			else:
+				acc += token
+
 			length += 1
 
 			if acc[0] == 't' and length == 4:
