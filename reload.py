@@ -212,8 +212,6 @@ def main():
 
 	for n in range(replay["num_frames"] - 1):
 
-		print("Turn {}".format(n))
-
 		for i, link in enumerate(links):
 			send_frame(link, replay, n)
 			bot_outputs[i].append(MoveList(link.stdout.readline().decode("utf-8")))
@@ -240,7 +238,11 @@ def main():
 
 			if diverges:
 
+				print("Turn {}".format(n))
+
 				messages = [baseline] + [bot_outputs[i][n].moves.get(sid, "") for i in range(len(bot_outputs))]
+
+				print("    ", end="")
 
 				for msg in messages:
 					print(msg, end="")
