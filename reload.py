@@ -7,9 +7,16 @@ class MoveList:
 
 	# FIXME: currently assumes bot sends sane commands.
 
-	def __init__(self, s):
+	def __init__(self, data):
 
 		self.moves = dict()
+
+		if type(data) is str:
+			self.init_from_string(data)
+		elif type(data) is dict:
+			self.init_from_dict(data)
+
+	def init_from_string(self, s):
 
 		tokens = s.split()
 
@@ -45,6 +52,30 @@ class MoveList:
 				self.moves[int(acc.split()[1])] = acc
 				acc = ""
 				length = 0
+
+	def init_from_dict(self, d):
+
+		for key in d:
+
+			order = d[key]
+
+			cmd = order["type"][0]
+			sid = order["shipId"]
+
+			if cmd == 'u':
+				self.moves[sid] = "{} {}".format(cmd, sid)
+				continue
+
+			elif cmd == 't':
+				angle = order["angle"]
+				if angle > 0:
+					angle %= 360
+				mag = order["magnitude"]
+				self.moves[sid] = "{} {} {} {}".format(cmd, sid, mag, angle)
+
+			elif cmd == 'd':
+				planet = order["planet_id"]
+				self.moves[sid] = "{} {} {}".format(cmd, sid, planet)
 
 	def sids(self):
 
@@ -179,7 +210,7 @@ def main():
 
 	bot_outputs = [ [] for n in range(len(links)) ]
 
-	for n in range(replay["num_frames"]):
+	for n in range(replay["num_frames"] - 1):
 
 		print("Turn {}".format(n))
 
@@ -187,36 +218,37 @@ def main():
 			send_frame(link, replay, n)
 			bot_outputs[i].append(MoveList(link.stdout.readline().decode("utf-8")))
 
-		if len(links) > 1:
+		replay_moves = MoveList(replay["moves"][n][str(pid)][0])
 
-			sids = set()
+		sids = set()
 
-			for i in range(len(links)):
-				sids = sids.union(bot_outputs[i][n].sids())
+		for i in range(len(links)):
+			sids = sids.union(bot_outputs[i][n].sids())
 
-			sids = list(sids)
-			sids = sorted(sids)
+		sids = list(sids)
+		sids = sorted(sids)
 
-			for sid in sids:
+		for sid in sids:
 
-				diverges = False
-				baseline = bot_outputs[0][n].moves.get(sid, "")
+			diverges = False
+			baseline = replay_moves.moves.get(sid, "")
 
-				for i in range(1, len(links)):
-					other = bot_outputs[i][n].moves.get(sid, "")
-					if other != baseline:
-						diverges = True
+			for i in range(0, len(links)):
+				other = bot_outputs[i][n].moves.get(sid, "")
+				if other != baseline:
+					diverges = True
 
-				if diverges:
-					messages = [bot_outputs[i][n].moves.get(sid, "") for i in range(len(bot_outputs))]
+			if diverges:
 
-					for msg in messages:
-						print(msg, end="")
-						if len(msg) < 18:
-							print(" " * (18 - len(msg)), end="")
+				messages = [baseline] + [bot_outputs[i][n].moves.get(sid, "") for i in range(len(bot_outputs))]
 
-					if len(messages) > 0:
-						print()
+				for msg in messages:
+					print(msg, end="")
+					if len(msg) < 18:
+						print(" " * (18 - len(msg)), end="")
+
+				if len(messages) > 0:
+					print()
 
 	print("Completed OK")
 
