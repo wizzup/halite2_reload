@@ -3,6 +3,7 @@
 
 import json, subprocess, sys
 
+
 class MoveList:
 
 	# FIXME: currently assumes bot sends sane commands.
@@ -15,6 +16,7 @@ class MoveList:
 			self.init_from_string(data)
 		elif type(data) is dict:
 			self.init_from_dict(data)
+
 
 	def init_from_string(self, s):
 
@@ -53,6 +55,7 @@ class MoveList:
 				acc = ""
 				length = 0
 
+
 	def init_from_dict(self, d):
 
 		for key in d:
@@ -63,10 +66,11 @@ class MoveList:
 			sid = order["shipId"]
 
 			if cmd == 'u':
+
 				self.moves[sid] = "{} {}".format(cmd, sid)
-				continue
 
 			elif cmd == 't':
+
 				angle = order["angle"]
 				if angle > 0:
 					angle %= 360
@@ -74,8 +78,10 @@ class MoveList:
 				self.moves[sid] = "{} {} {} {}".format(cmd, sid, mag, angle)
 
 			elif cmd == 'd':
+
 				planet = order["planet_id"]
 				self.moves[sid] = "{} {} {}".format(cmd, sid, planet)
+
 
 	def sids(self):
 
