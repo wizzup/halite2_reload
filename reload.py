@@ -1,3 +1,6 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -p python3 -i python
+
 # Usage: reload.py <filename> <player_id> <bot_path> <optional_2nd_bot_path>
 # Note that the replay file must be decompressed JSON (not zstd; use the Chlorine Viewer for this).
 
